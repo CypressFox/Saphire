@@ -22,6 +22,7 @@ from sapphire.ui import theme
 from sapphire.ui.browse import BrowsePage
 from sapphire.ui.audio import PreviewPlayer
 from sapphire.ui.crosshair_page import CrosshairPage
+from sapphire.ui.performance_page import PerformancePage
 from sapphire.ui.dialogs import ask_text, choose_file, choose_variants, confirm, error
 from sapphire.ui.downloads import DownloadsPage, Job, JobList
 from sapphire.ui.images import ImageCache
@@ -40,7 +41,8 @@ PRESENCE_URL = "https://github.com/SnowberriFox/Saphire"
 
 
 PAGE_CROSSHAIR = 4
-PAGE_SETTINGS = 5
+PAGE_PERFORMANCE = 5
+PAGE_SETTINGS = 6
 
 
 class MainWindow(QMainWindow):
@@ -113,8 +115,10 @@ class MainWindow(QMainWindow):
         self.profiles = ProfilesPage(manager)
         self.downloads = DownloadsPage(self.jobs)
         self.crosshair = CrosshairPage(manager)
+        self.performance = PerformancePage(manager)
         self.settings = SettingsPage(manager)
-        for page in (self.browse, self.installed, self.profiles, self.downloads, self.crosshair, self.settings):
+        for page in (self.browse, self.installed, self.profiles, self.downloads, self.crosshair, self.performance,
+                     self.settings):
             self.stack.addWidget(page)
         outer.addWidget(self.stack, 1)
         self.setCentralWidget(central)
@@ -152,6 +156,7 @@ class MainWindow(QMainWindow):
         self.installed.find_like_requested.connect(self._find_like)
         self.browse.collection_requested.connect(self.open_collection)
         self.crosshair.status.connect(self.say)
+        self.performance.status.connect(self.say)
         self.profiles.import_requested.connect(self.import_profile_file)
         self.settings.helper_changed.connect(self.set_helper)
         self.player = PreviewPlayer(manager.gb.session)
@@ -185,7 +190,7 @@ class MainWindow(QMainWindow):
         lay.addSpacing(18)
         self.nav = QButtonGroup(self)
         self.nav_buttons = []
-        for i, label in enumerate(("Browse", "Installed", "Profiles", "Downloads", "Crosshair", "Settings")):
+        for i, label in enumerate(("Browse", "Installed", "Profiles", "Downloads", "Crosshair", "Performance", "Settings")):
             b = QPushButton(label)
             b.setObjectName("NavButton")
             b.setCheckable(True)
@@ -236,6 +241,8 @@ class MainWindow(QMainWindow):
             self.profiles.reload()
         elif index == PAGE_CROSSHAIR:
             self.crosshair.refresh()
+        elif index == PAGE_PERFORMANCE:
+            self.performance.refresh()
         elif index == PAGE_SETTINGS:
             self.settings.refresh()
         self.update_presence()
@@ -314,7 +321,8 @@ class MainWindow(QMainWindow):
             details = "In Deadlock"
         else:
             details = {0: "Browsing mods", 1: "Managing mods", 2: "Switching profiles",
-                       3: "Downloading mods", 4: "Tuning the crosshair", 5: "In settings"}.get(page, "Managing mods")
+                       3: "Downloading mods", 4: "Tuning the crosshair", 5: "Checking performance",
+                       6: "In settings"}.get(page, "Managing mods")
         state = f"{on} mod{'s' if on != 1 else ''} active" + (f" · {len(mods)} installed" if len(mods) != on else "")
         self.presence.update(details, state, large_image=PRESENCE_IMAGE, large_text="Sapphire for Deadlock",
                              buttons=[{"label": "Get Sapphire", "url": PRESENCE_URL}])

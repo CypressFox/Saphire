@@ -449,7 +449,7 @@ def main():
         QTimer.singleShot(400, lambda: (shot("4-profiles"), settings()))
 
     def settings():
-        win.go(5)
+        win.go(6)
         QTimer.singleShot(400, lambda: (shot("5-settings"), small_settings()))
 
     def small_settings():
@@ -475,7 +475,7 @@ def main():
         mgr.lib.settings.theme_colors = {"accent": "#B5423A"}
         mgr.lib.settings.ui_scale = "Normal"
         win.apply_appearance()
-        win.go(5)
+        win.go(6)
         win.settings._refresh_swatches()
         QTimer.singleShot(800, lambda: (shot("10-parchment-settings"), restore_theme()))
 

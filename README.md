@@ -115,6 +115,8 @@ To uninstall: `./uninstall.sh` (keeps your mod library) or `./uninstall.sh --pur
 - **Crosshair & config**: edit every crosshair setting with a live preview, save
   crosshairs, share them as console commands, restore your old one; edit
   `autoexec.cfg` (needs `+exec autoexec` in Deadlock's launch options).
+- **Performance**: an experimental low-end preset you can add to or remove from
+  `autoexec.cfg`, and the mods on in your profile listed by size.
 - **Camera fix for older skins** (on by default, Settings → Behaviour): a Deadlock
   update turned every hero's camera attachments by 120°, so skins compiled before
   it put the first-person camera in the wrong spot. On apply, Sapphire converts
