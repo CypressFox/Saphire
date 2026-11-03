@@ -3,6 +3,19 @@
 All notable changes to Sapphire. The in-app updater shows the newest section
 as "What's new".
 
+## 1.13.0 — 2026-11-03
+
+### Added
+- **Performance page** (new, between Crosshair and Settings), to help on low-end
+  PCs.
+  - **Low-end preset** (experimental): adds `fps_max_ui 30` and
+    `cl_ragdoll_limit 0` to `autoexec.cfg`, and takes them out again without
+    touching your own lines. Deadlock needs `+exec autoexec` in its Steam launch
+    options to read the file, and there's a button to copy that. The effect on
+    FPS hasn't been measured yet.
+  - **Mod sizes**: the mods switched on in your profile, biggest first. Size is
+    a rough guide to memory and loading time, not to FPS.
+
 ## 1.12.0 — 2026-10-31
 
 ### Added
