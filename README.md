@@ -54,10 +54,16 @@ A packaged Windows installer isn't ready yet, so for now you run it from source:
 ```powershell
 git clone https://github.com/SnowberriFox/Saphire.git
 cd Saphire
-py -m venv .venv; .\.venv\Scripts\Activate.ps1
-pip install -e .
-python -m sapphire
+py -3.13 -m venv .venv
+.\.venv\Scripts\python.exe -m pip install -e .
+.\.venv\Scripts\python.exe -m sapphire
 ```
+
+Use Python 3.13 (`winget install Python.Python.3.13`): a brand-new Python can be
+missing ready-made Windows builds of some libraries (`zstandard`, `lz4`), and
+then pip tries to compile them and fails unless you have Microsoft's C++ build
+tools. You'll need Git too (`winget install Git.Git`). Calling the `.venv`
+Python directly avoids PowerShell's script-blocking error on `Activate.ps1`.
 
 Install [7-Zip](https://www.7-zip.org/) if you want `.7z` and `.rar` mods (`.zip`
 works without it). Two Linux-only extras are off on Windows for now: the
