@@ -3,6 +3,21 @@
 All notable changes to Sapphire. The in-app updater shows the newest section
 as "What's new".
 
+## 1.14.1 — 2026-11-14
+
+### Added
+- **Sapphire.exe for Windows.** Every release now has a single portable
+  `Sapphire.exe` attached: download it and run it, no Python or install needed.
+  It's built and self-tested on a Windows machine by GitHub Actions on every
+  push. It isn't code-signed yet, so SmartScreen may warn the first time
+  (*More info → Run anyway*).
+
+### Changed
+- On Windows the update bar says **Download**, and opens the releases page for
+  the new `Sapphire.exe`, like the Flatpak does.
+- Sapphire's GitHub links point to the repository's new home,
+  `CypressFox/Saphire`.
+
 ## 1.14.0 — 2026-11-14
 
 ### Added

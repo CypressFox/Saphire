@@ -37,7 +37,7 @@ from sapphire import __version__, paths
 log = logging.getLogger(__name__)
 
 WINDOWS = sys.platform == "win32"
-REPO = "SnowberriFox/Saphire"
+REPO = "CypressFox/Saphire"
 BRANCH = "main"
 API = "https://api.github.com"
 RAW = "https://raw.githubusercontent.com"
@@ -93,6 +93,12 @@ def running_from_source() -> bool:
 def in_flatpak() -> bool:
     """Running from the Flatpak bundle: it's updated by installing a newer bundle."""
     return bool(os.environ.get("FLATPAK_ID")) or Path("/.flatpak-info").is_file()
+
+
+def download_only() -> bool:
+    """Installs that can't replace themselves (the Flatpak, the Windows .exe):
+    updating means downloading the new build from the releases page."""
+    return in_flatpak() or WINDOWS
 
 
 def in_venv() -> bool:
@@ -187,8 +193,8 @@ class Updater:
     # ----------------------------------------------------------- installing
     def install(self, rel: Release, progress: Callable[[str, int, int], None] | None = None) -> None:
         if WINDOWS:
-            raise UpdateError("On Windows, download the latest version from the GitHub releases page "
-                              "and run it to update.")
+            raise UpdateError("On Windows, download the new Sapphire.exe from the GitHub releases page "
+                              "to update.")
         if in_flatpak():
             raise UpdateError("This is the Flatpak version: download the new .flatpak from the GitHub "
                               "releases page and open it to update.")

@@ -238,7 +238,7 @@ def main():
     win = MainWindow(mgr)
     from sapphire import updater as _upd
     win.updater.check = lambda force=False: _upd.Release(version="1.2.0", tarball_url="https://x", source="release",
-                                                         notes="Fixes", url="https://github.com/SnowberriFox/Saphire/releases")
+                                                         notes="Fixes", url="https://github.com/CypressFox/Saphire/releases")
     for i in range(120):  # pre-fill image cache (no network here)
         img = fake_image(i)
         win.images._pix[f"https://images.gamebanana.com/img/ss/mods/530-90_fake{i}.jpg"] = QPixmap.fromImage(img)

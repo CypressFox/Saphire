@@ -11,7 +11,7 @@ Deadlock whether Steam is native, Flatpak or Snap, on any library drive.
 ## Install
 
 ```sh
-git clone https://github.com/SnowberriFox/Saphire.git
+git clone https://github.com/CypressFox/Saphire.git
 cd Saphire
 bash install.sh
 ```
@@ -49,10 +49,17 @@ Sapphire runs on Windows. It finds Steam from the registry (and the usual
 same way as on Linux. Its files live in `%APPDATA%\Sapphire` (library, profiles)
 and `%LOCALAPPDATA%\Sapphire\cache` (downloads).
 
-A packaged Windows installer isn't ready yet, so for now you run it from source:
+**Download:** grab `Sapphire.exe` from the
+[latest release](https://github.com/CypressFox/Saphire/releases/latest) and run
+it. It's a single portable file, no install needed. Windows SmartScreen may warn
+the first time because the file isn't code-signed: choose *More info → Run
+anyway*. To update, download the newer `Sapphire.exe` (the app tells you when
+there is one); your mods and settings stay where they are.
+
+**Or run from source:**
 
 ```powershell
-git clone https://github.com/SnowberriFox/Saphire.git
+git clone https://github.com/CypressFox/Saphire.git
 cd Saphire
 py -3.13 -m venv .venv
 .\.venv\Scripts\python.exe -m pip install -e .
@@ -70,6 +77,10 @@ works without it). Two Linux-only extras are off on Windows for now: the
 login-time background helper (just hit **Launch Deadlock**, which re-checks
 `gameinfo.gi` first) and Discord Rich Presence. The in-app updater points you to
 the GitHub releases page rather than updating in place.
+
+Every push to `main` builds `Sapphire.exe` on a Windows runner (Actions →
+Windows → the latest run → Artifacts) and runs the self-test on it; tagged
+releases get it attached automatically.
 
 ## Updating
 

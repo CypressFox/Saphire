@@ -12,7 +12,7 @@ from pathlib import Path
 from sapphire import __version__
 from sapphire.updater import parse_version
 
-CHANGELOG_URL = "https://github.com/SnowberriFox/Saphire/blob/main/CHANGELOG.md"
+CHANGELOG_URL = "https://github.com/CypressFox/Saphire/blob/main/CHANGELOG.md"
 MODES = {"update": "After an update", "always": "Every time Sapphire opens", "never": "Never"}
 _HEADING = re.compile(r"^## +(\d+\.\d+(?:\.\d+)?)\b.*$", re.M)
 

@@ -1,0 +1,77 @@
+name: Windows
+
+on:
+  push:
+    branches: [main]
+    tags: ["v*"]
+  workflow_dispatch:
+
+permissions:
+  contents: write   # attach Sapphire.exe to tagged releases
+
+jobs:
+  windows:
+    name: Build Sapphire.exe
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      # 3.13: every dependency has ready-made Windows wheels (a brand-new Python
+      # can lack them for zstandard/lz4, and then pip needs a C++ compiler).
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+          cache: pip
+
+      - name: Install Sapphire and PyInstaller
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install . pyinstaller pillow pytest
+
+      # The test suite on real Windows. Reported, not blocking, while the
+      # Windows port is new: a failure here shows up as a warning on the run.
+      - name: Tests on Windows
+        continue-on-error: true
+        run: python -m pytest -q
+
+      - name: Build Sapphire.exe
+        run: >
+          pyinstaller packaging/windows/launcher.py
+          --name Sapphire --onefile --windowed
+          --icon sapphire/assets/sapphire-512.png
+          --collect-data sapphire --collect-submodules sapphire
+          --noconfirm
+
+      # The same self-test the Flatpak runs: imports, archives, sound, and the
+      # main window built offscreen. The .exe is windowed (no console), so the
+      # report goes to a file. No report at all means it didn't start: fail.
+      - name: Self-test the .exe
+        shell: pwsh
+        run: |
+          $env:SAPPHIRE_SELFTEST_LOG = "$PWD\selftest.txt"
+          $env:QT_QPA_PLATFORM = "offscreen"
+          $p = Start-Process -FilePath dist\Sapphire.exe -ArgumentList "--selftest" -Wait -PassThru
+          if (-not (Test-Path selftest.txt)) {
+            Write-Output "::error title=Sapphire.exe didn't start::exit code $($p.ExitCode), no self-test report"
+            exit 1
+          }
+          Get-Content selftest.txt
+          if ($p.ExitCode -ne 0) {
+            Write-Output "::warning title=Windows self-test::some checks failed (exit code $($p.ExitCode)); see the log above"
+          } else {
+            Write-Output "::notice title=Windows self-test::all checks passed"
+          }
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: Sapphire-windows
+          path: dist/Sapphire.exe
+
+      # Adds the file to the same release the Flatpak workflow publishes
+      # (that one writes the notes).
+      - name: Attach to the release
+        if: startsWith(github.ref, 'refs/tags/v')
+        uses: softprops/action-gh-release@v2
+        with:
+          name: Sapphire ${{ github.ref_name }}
+          files: dist/Sapphire.exe

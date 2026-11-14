@@ -31,13 +31,13 @@ from sapphire.ui.installed import InstalledPage
 from sapphire.discord import Presence
 from sapphire.ui.onboarding import OnboardingDialog
 from sapphire.ui.pages import ProfilesPage, SettingsPage
-from sapphire.updater import Updater, in_flatpak, restart, running_from_source
+from sapphire.updater import REPO, Updater, download_only, in_flatpak, restart, running_from_source
 from sapphire.ui.workers import JOB_POOL, NET_POOL, MainThreadCaller, run
 
 log = logging.getLogger("sapphire")
 MOD_FILE_TYPES = (".zip", ".7z", ".rar", ".vpk")
-PRESENCE_IMAGE = "https://raw.githubusercontent.com/SnowberriFox/Saphire/main/sapphire/assets/sapphire-512.png"
-PRESENCE_URL = "https://github.com/SnowberriFox/Saphire"
+PRESENCE_IMAGE = "https://raw.githubusercontent.com/CypressFox/Saphire/main/sapphire/assets/sapphire-512.png"
+PRESENCE_URL = "https://github.com/CypressFox/Saphire"
 
 
 PAGE_CROSSHAIR = 4
@@ -923,7 +923,7 @@ class MainWindow(QMainWindow):
                 if getattr(self, "_notes_conn", None) is not None:
                     self.update_notes.clicked.disconnect(self._notes_conn)
                 self._notes_conn = self.update_notes.clicked.connect(lambda: self._show_notes(rel))
-                self.update_go.setText(f"Download {rel.version}" if in_flatpak() else f"Update to {rel.version}")
+                self.update_go.setText(f"Download {rel.version}" if download_only() else f"Update to {rel.version}")
                 self.update_go.setEnabled(True)
                 self.update_later.show()
                 self.update_bar.show()
@@ -957,10 +957,13 @@ class MainWindow(QMainWindow):
         rel = self.updater.available
         if not rel:
             return
-        if in_flatpak():
-            # A Flatpak can't replace itself: send people to the new bundle.
-            QDesktopServices.openUrl(QUrl("https://github.com/SnowberriFox/Saphire/releases/latest"))
-            self.say("Download the new .flatpak and open it (or run flatpak install on it) to update.", 15000)
+        if download_only():
+            # The Flatpak and the Windows .exe can't replace themselves: send people to the new build.
+            QDesktopServices.openUrl(QUrl(f"https://github.com/{REPO}/releases/latest"))
+            if in_flatpak():
+                self.say("Download the new .flatpak and open it (or run flatpak install on it) to update.", 15000)
+            else:
+                self.say("Download the new Sapphire.exe and use it in place of the old one.", 15000)
             return
         if running_from_source():
             error(self, "Running from source", "You're running Sapphire from a source checkout, so update it "

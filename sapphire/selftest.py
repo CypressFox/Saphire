@@ -17,6 +17,11 @@ from pathlib import Path
 
 
 def run() -> int:
+    # A windowed build (the Windows .exe) has no console to print to; CI points
+    # SAPPHIRE_SELFTEST_LOG at a file and reads the report from there.
+    log_path = os.environ.get("SAPPHIRE_SELFTEST_LOG")
+    if log_path:
+        sys.stdout = sys.stderr = open(log_path, "w", encoding="utf-8", buffering=1)
     tmp = Path(tempfile.mkdtemp(prefix="sapphire-selftest-"))
     os.environ["SAPPHIRE_HOME"] = str(tmp / "home")
     os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
