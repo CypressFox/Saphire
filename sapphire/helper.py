@@ -13,7 +13,10 @@ running helper exits on its next check.
 
 from __future__ import annotations
 
-import fcntl
+try:
+    import fcntl
+except ImportError:          # Windows: the background helper isn't available there yet
+    fcntl = None
 import logging
 import os
 import shlex
@@ -34,8 +37,13 @@ AUTOSTART_NAME = "sapphire-helper.desktop"
 
 # ---------------------------------------------------------------------- locks
 
+SUPPORTED = fcntl is not None   # the background helper is Linux-only for now
+
+
 def _lock(path: Path):
     """Hold an exclusive lock on `path` for this process's lifetime; None if taken."""
+    if fcntl is None:
+        return None
     path.parent.mkdir(parents=True, exist_ok=True)
     fh = open(path, "a+")
     try:
@@ -192,6 +200,8 @@ def command() -> list[str]:
 
 
 def enable(start_now: bool = True) -> Path:
+    if not SUPPORTED:
+        raise RuntimeError("The background helper isn't available on Windows yet.")
     f = autostart_file()
     f.parent.mkdir(parents=True, exist_ok=True)
     f.write_text("\n".join([

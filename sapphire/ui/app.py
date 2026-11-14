@@ -365,14 +365,14 @@ class MainWindow(QMainWindow):
 
     # -------------------------------------------------------------- start-up
     def _startup(self):
-        if self.mgr.lib.settings.helper:
-            from sapphire import helper
+        from sapphire import helper
+        if self.mgr.lib.settings.helper and helper.SUPPORTED:
             try:
                 if not helper.is_enabled():
                     helper.enable(start_now=False)   # e.g. after a reinstall
                 if not helper.helper_running():
                     helper.start()
-            except OSError as exc:
+            except (OSError, RuntimeError) as exc:
                 log.warning("helper: %s", exc)
         if not self.mgr.lib.settings.onboarded:
             self.run_setup(first=True)
@@ -811,7 +811,7 @@ class MainWindow(QMainWindow):
             else:
                 helper.disable()
                 self.say("Background helper off.")
-        except OSError as exc:
+        except (OSError, RuntimeError) as exc:
             error(self, "Couldn't change the helper", str(exc))
 
     def update_all(self):

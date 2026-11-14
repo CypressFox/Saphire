@@ -1,11 +1,12 @@
 # Sapphire
 
-A fast, reliable Deadlock mod manager for Linux. Browse GameBanana live, install
-with one click, drag mods into the order you want, see exactly which mods clash,
-and keep everything working after game updates.
+A fast, reliable Deadlock mod manager for Linux and Windows. Browse GameBanana
+live, install with one click, drag mods into the order you want, see exactly
+which mods clash, and keep everything working after game updates.
 
 Works the same on **Ubuntu** and **Bazzite** (and other Linux desktops). Finds
 Deadlock whether Steam is native, Flatpak or Snap, on any library drive.
+**Windows** is supported too (see below).
 
 ## Install
 
@@ -40,6 +41,29 @@ and Flatpak Steam, plus `/run/media`, `/media` and `/mnt` for other drives);
 if your Steam library lives somewhere else, grant it with
 `flatpak override --user --filesystem=/path/to/library io.github.snowberrifox.Sapphire`.
 To update, install the newer bundle the same way.
+
+### Windows
+
+Sapphire runs on Windows. It finds Steam from the registry (and the usual
+`Program Files` spots), reads whether Deadlock is running, and deploys mods the
+same way as on Linux. Its files live in `%APPDATA%\Sapphire` (library, profiles)
+and `%LOCALAPPDATA%\Sapphire\cache` (downloads).
+
+A packaged Windows installer isn't ready yet, so for now you run it from source:
+
+```powershell
+git clone https://github.com/SnowberriFox/Saphire.git
+cd Saphire
+py -m venv .venv; .\.venv\Scripts\Activate.ps1
+pip install -e .
+python -m sapphire
+```
+
+Install [7-Zip](https://www.7-zip.org/) if you want `.7z` and `.rar` mods (`.zip`
+works without it). Two Linux-only extras are off on Windows for now: the
+login-time background helper (just hit **Launch Deadlock**, which re-checks
+`gameinfo.gi` first) and Discord Rich Presence. The in-app updater points you to
+the GitHub releases page rather than updating in place.
 
 ## Updating
 
@@ -143,6 +167,11 @@ You can also drag `.zip`, `.7z`, `.rar` or `.vpk` files onto the window to add t
   GameBanana. Neither manager's data is changed. Even without importing, files
   those managers left in the addons folder are adopted with their proper names
   the first time you apply.
+
+- **Export for Deadlock Mod Manager**: Profiles → *Export for Deadlock Mod
+  Manager…*. Writes a mod-interchange bundle (a folder with the VPKs and a
+  `mod-interchange.json`) in the shared format DMM and Grimoire read, so you can
+  hand a profile the other way too. In DMM, use its import and pick that folder.
 
 If a download contains several VPKs (colour variants, optional parts), Sapphire
 asks which ones you want and remembers your choice for future updates.

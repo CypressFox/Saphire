@@ -42,13 +42,21 @@ def sniff(path: Path) -> str | None:
 
 
 def find_7z() -> str | None:
-    bundled = paths.data_dir() / "bin" / "7zz"
-    if bundled.is_file() and os.access(bundled, os.X_OK):
-        return str(bundled)
+    bin_dir = paths.data_dir() / "bin"
+    for bundled in (bin_dir / "7z.exe", bin_dir / "7za.exe", bin_dir / "7zz", bin_dir / "7zz.exe"):
+        if bundled.is_file() and os.access(bundled, os.X_OK):
+            return str(bundled)
     for name in ("7zz", "7z", "7za"):
         found = shutil.which(name)
         if found:
             return found
+    if os.name == "nt":
+        # 7-Zip's installer doesn't add itself to PATH; check its usual home.
+        for base in (os.environ.get("ProgramFiles"), os.environ.get("ProgramFiles(x86)")):
+            if base:
+                cand = Path(base) / "7-Zip" / "7z.exe"
+                if cand.is_file():
+                    return str(cand)
     return None
 
 

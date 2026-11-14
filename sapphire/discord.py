@@ -145,6 +145,10 @@ class Presence:
         self._last_sent = payload
 
     def _connect(self) -> bool:
+        if not hasattr(socket, "AF_UNIX"):
+            # Windows exposes Discord's IPC as a named pipe, not a Unix socket;
+            # presence isn't wired up there yet, so stay quietly disconnected.
+            return False
         for path in socket_candidates():
             if not path.exists():
                 continue

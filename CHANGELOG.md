@@ -3,6 +3,25 @@
 All notable changes to Sapphire. The in-app updater shows the newest section
 as "What's new".
 
+## 1.14.0 — 2026-11-14
+
+### Added
+- **Windows support.** Sapphire now runs on Windows as well as Linux. It finds
+  Steam from the registry (and the usual Program Files folders), detects whether
+  Deadlock is running, launches it, and deploys mods the same way. Its files live
+  in `%APPDATA%\Sapphire` and `%LOCALAPPDATA%\Sapphire\cache`. A packaged
+  installer isn't ready yet, so for now you run it from source (see the README).
+  - Off on Windows for now: the login-time background helper and Discord Rich
+    Presence. The in-app updater points you to the GitHub releases page instead
+    of updating in place.
+- **Export for Deadlock Mod Manager** (Profiles → *Export for Deadlock Mod
+  Manager…*). Writes a mod-interchange bundle — a folder with the VPKs and a
+  `mod-interchange.json` — in the shared format Deadlock Mod Manager and Grimoire
+  read, so you can move a profile to them, not just import from them. Pick a
+  folder; in DMM, use its import and choose that folder (or the
+  `mod-interchange.json` inside it). GameBanana mods carry their ids so DMM can
+  check them for updates; local mods carry a file hash so they de-duplicate.
+
 ## 1.13.0 — 2026-11-03
 
 ### Added

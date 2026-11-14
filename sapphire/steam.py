@@ -1,7 +1,8 @@
-"""Finding Deadlock across every way Steam gets installed on Linux.
+"""Finding Deadlock across every way Steam gets installed, on Linux and Windows.
 
-Covers native Steam (Bazzite, Ubuntu .deb), Flatpak Steam and Snap Steam,
-plus every extra library folder listed in libraryfolders.vdf.
+Linux covers native Steam (Bazzite, Ubuntu .deb), Flatpak Steam and Snap Steam.
+Windows reads Steam's install path from the registry and the usual Program Files
+spots. Either way every extra library folder in libraryfolders.vdf is searched.
 """
 
 from __future__ import annotations
@@ -10,15 +11,20 @@ import logging
 import os
 import shutil
 import subprocess
+import sys
 from pathlib import Path
 from typing import Iterable
 
 log = logging.getLogger(__name__)
 
+WINDOWS = sys.platform == "win32"
+# Keep spawned helpers (tasklist, launches) from flashing a console window.
+_NO_WINDOW = 0x08000000 if WINDOWS else 0   # subprocess.CREATE_NO_WINDOW
+
 DEADLOCK_APP_ID = 1422450
 STEAM_RUN_URL = f"steam://rungameid/{DEADLOCK_APP_ID}"
 
-# Relative to $HOME. Order matters only for display; duplicates are removed.
+# Relative to $HOME (Linux). Order matters only for display; duplicates are removed.
 STEAM_ROOT_CANDIDATES = (
     ".local/share/Steam",                                   # native (Bazzite, Ubuntu .deb)
     ".steam/steam",                                         # native symlink
@@ -115,12 +121,50 @@ def _ci_get(d: dict, key: str, default=None):
 
 # ---------------------------------------------------------------------- detection
 
+def _registry_steam_paths() -> list[Path]:
+    """Steam install folders from the Windows registry (empty elsewhere)."""
+    try:
+        import winreg
+    except ImportError:
+        return []
+    found: list[Path] = []
+    keys = (
+        (winreg.HKEY_CURRENT_USER, r"Software\Valve\Steam", "SteamPath"),
+        (winreg.HKEY_LOCAL_MACHINE, r"SOFTWARE\WOW6432Node\Valve\Steam", "InstallPath"),
+        (winreg.HKEY_LOCAL_MACHINE, r"SOFTWARE\Valve\Steam", "InstallPath"),
+    )
+    for hive, key, value in keys:
+        try:
+            with winreg.OpenKey(hive, key) as handle:
+                raw = winreg.QueryValueEx(handle, value)[0]
+            if raw:
+                found.append(Path(raw))
+        except OSError:
+            continue
+    return found
+
+
+def _windows_root_candidates() -> list[Path]:
+    roots = list(_registry_steam_paths())
+    for var in ("ProgramFiles(x86)", "ProgramFiles"):
+        base = os.environ.get(var)
+        if base:
+            roots.append(Path(base) / "Steam")
+    roots.append(Path(r"C:\Program Files (x86)\Steam"))
+    return roots
+
+
+def _root_candidates(home: Path) -> list[Path]:
+    if WINDOWS:
+        return _windows_root_candidates()
+    return [home / rel for rel in STEAM_ROOT_CANDIDATES]
+
+
 def steam_roots(home: Path | None = None) -> list[Path]:
     home = home or Path.home()
     seen: set[Path] = set()
     roots: list[Path] = []
-    for rel in STEAM_ROOT_CANDIDATES:
-        p = home / rel
+    for p in _root_candidates(home):
         try:
             if not (p / "steamapps").is_dir():
                 continue
@@ -187,8 +231,28 @@ REGISTRY_CANDIDATES = (".steam/registry.vdf", "snap/steam/common/.steam/registry
                        ".var/app/com.valvesoftware.Steam/.steam/registry.vdf")
 
 
+def _windows_running_app() -> str | None:
+    """The app id Steam is running, from HKCU\\Software\\Valve\\Steam\\RunningAppID."""
+    try:
+        import winreg
+    except ImportError:
+        return None
+    try:
+        with winreg.OpenKey(winreg.HKEY_CURRENT_USER, r"Software\Valve\Steam") as handle:
+            value = winreg.QueryValueEx(handle, "RunningAppID")[0]
+    except OSError:
+        return None
+    try:
+        app = int(value)
+    except (TypeError, ValueError):
+        return None
+    return str(app) if app else None
+
+
 def steam_running_app(home: Path | None = None) -> str | None:
-    """The app id Steam says is running (registry.vdf's RunningAppID), if any."""
+    """The app id Steam says is running, if any."""
+    if WINDOWS:
+        return _windows_running_app()
     home = home or Path.home()
     for rel in REGISTRY_CANDIDATES:
         try:
@@ -208,8 +272,23 @@ def steam_running_app(home: Path | None = None) -> str | None:
     return None
 
 
+def _windows_game_running() -> bool:
+    # Steam's RunningAppID is cheapest and needs no permissions; Deadlock always
+    # launches through Steam. Fall back to the task list if it's not set.
+    if _windows_running_app() == str(DEADLOCK_APP_ID):
+        return True
+    try:
+        out = subprocess.run(["tasklist", "/fo", "csv", "/nh"], capture_output=True, text=True,
+                             timeout=10, creationflags=_NO_WINDOW).stdout.lower()
+    except (OSError, subprocess.SubprocessError):
+        return False
+    return "deadlock.exe" in out or "project8.exe" in out
+
+
 def is_game_running(proc: Path = Path("/proc")) -> bool:
-    """True if Deadlock (deadlock.exe under Proton) is running."""
+    """True if Deadlock is running."""
+    if WINDOWS:
+        return _windows_game_running()
     if os.environ.get("FLATPAK_ID"):
         # A Flatpak can't see the host's processes; ask Steam instead.
         return steam_running_app() == str(DEADLOCK_APP_ID)
@@ -230,7 +309,13 @@ def is_game_running(proc: Path = Path("/proc")) -> bool:
 
 
 def launch_game() -> None:
-    """Ask Steam to launch Deadlock (works for native, Flatpak and Snap Steam)."""
+    """Ask Steam to launch Deadlock."""
+    if WINDOWS:
+        try:
+            os.startfile(STEAM_RUN_URL)   # noqa: S606 - a steam:// URL, not a file
+            return
+        except OSError as exc:
+            raise RuntimeError(f"Couldn't ask Steam to start Deadlock: {exc}") from exc
     attempts = []
     if shutil.which("xdg-open"):
         attempts.append(["xdg-open", STEAM_RUN_URL])
@@ -258,6 +343,12 @@ def _clean_env() -> dict:
 
 
 def open_path(path: Path | str) -> None:
+    if WINDOWS:
+        try:
+            os.startfile(str(path))   # noqa: S606 - opens the folder/file in Explorer
+        except OSError as exc:
+            log.warning("couldn't open %s: %s", path, exc)
+        return
     if shutil.which("xdg-open"):
         subprocess.Popen(["xdg-open", str(path)], stdout=subprocess.DEVNULL,
                          stderr=subprocess.DEVNULL, start_new_session=True, env=_clean_env())

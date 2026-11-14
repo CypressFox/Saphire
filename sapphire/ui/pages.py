@@ -80,7 +80,11 @@ class ProfilesPage(QWidget):
         self.export_btn.setToolTip("Save this profile to a file you can send. Whoever opens it gets the same "
                                    "mods, order and variants; GameBanana mods download automatically.")
         self.export_btn.clicked.connect(self._export)
-        for b in (self.load_btn, self.dup_btn, self.rename_btn, self.export_btn):
+        self.dmm_btn = QPushButton("Export for Deadlock Mod Manager…")
+        self.dmm_btn.setToolTip("Write a mod-interchange bundle (a folder with the VPKs and a "
+                                "mod-interchange.json) that Deadlock Mod Manager and Grimoire can import.")
+        self.dmm_btn.clicked.connect(self._export_dmm)
+        for b in (self.load_btn, self.dup_btn, self.rename_btn, self.export_btn, self.dmm_btn):
             actions.addWidget(b)
         actions.addStretch(1)
         actions.addWidget(self.delete_btn)
@@ -116,7 +120,7 @@ class ProfilesPage(QWidget):
         cur = self._current()
         has = cur is not None
         active = cur == self.mgr.lib.active_profile
-        for b in (self.dup_btn, self.rename_btn, self.export_btn):
+        for b in (self.dup_btn, self.rename_btn, self.export_btn, self.dmm_btn):
             b.setEnabled(has)
         self.load_btn.setEnabled(has and not active)
         self.delete_btn.setEnabled(has and not active)
@@ -145,6 +149,29 @@ class ProfilesPage(QWidget):
                 if local else "")
         QMessageBox.information(self, "Profile saved",
                                 f"Saved “{name}” ({n} mod{'s' if n != 1 else ''}) to {dest}.{note}")
+
+    def _export_dmm(self):
+        from pathlib import Path
+        from sapphire.ui.dialogs import error
+        name = self._current()
+        if not name:
+            return
+        dest = QFileDialog.getExistingDirectory(self, "Choose a folder for the export",
+                                                str(Path.home() / "Downloads"))
+        if not dest:
+            return
+        try:
+            report = self.mgr.export_interchange(dest, names=[name])
+        except Exception as exc:  # noqa: BLE001
+            error(self, "Couldn't export the profile", str(exc))
+            return
+        skipped = (f" {len(report.skipped)} mod(s) had no files on disk and were left out."
+                   if report.skipped else "")
+        QMessageBox.information(
+            self, "Exported for Deadlock Mod Manager",
+            f"Wrote {report.exported} mod{'s' if report.exported != 1 else ''} to:\n{report.bundle_path}\n\n"
+            f"In Deadlock Mod Manager, use its import and pick that folder "
+            f"(or the mod-interchange.json inside it).{skipped}")
 
     def _import(self):
         from pathlib import Path
@@ -331,6 +358,10 @@ class SettingsPage(QWidget):
         self.helper_box.setChecked(manager.lib.settings.helper)
         self.helper_box.toggled.connect(self._helper_toggled)
         root.addWidget(self.helper_box)
+        from sapphire import helper
+        if not helper.SUPPORTED:        # Windows: no login-time background helper yet
+            self.helper_box.setChecked(False)
+            self.helper_box.hide()
 
         root.addWidget(_section("Appearance"))
         ap = QHBoxLayout()

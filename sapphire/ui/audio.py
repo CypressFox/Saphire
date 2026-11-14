@@ -29,7 +29,10 @@ def pick_audio_backend(env=None) -> str | None:
     Ubuntu and Bazzite both provide through pipewire-pulse and Flatpak exposes as
     its sound socket; then PipeWire only when it's fully present; then ALSA."""
     import os
+    import sys
     env = os.environ if env is None else env
+    if sys.platform == "win32" or not hasattr(os, "getuid"):
+        return None   # Qt uses the OS audio backend on Windows; nothing to pick
     if env.get("QT_AUDIO_BACKEND"):
         return None
     runtime = Path(env.get("XDG_RUNTIME_DIR") or f"/run/user/{os.getuid()}")

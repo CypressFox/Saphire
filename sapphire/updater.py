@@ -36,6 +36,7 @@ from sapphire import __version__, paths
 
 log = logging.getLogger(__name__)
 
+WINDOWS = sys.platform == "win32"
 REPO = "SnowberriFox/Saphire"
 BRANCH = "main"
 API = "https://api.github.com"
@@ -185,6 +186,9 @@ class Updater:
 
     # ----------------------------------------------------------- installing
     def install(self, rel: Release, progress: Callable[[str, int, int], None] | None = None) -> None:
+        if WINDOWS:
+            raise UpdateError("On Windows, download the latest version from the GitHub releases page "
+                              "and run it to update.")
         if in_flatpak():
             raise UpdateError("This is the Flatpak version: download the new .flatpak from the GitHub "
                               "releases page and open it to update.")

@@ -749,6 +749,16 @@ class Manager:
         tmp.replace(dest)
         return len(mods)
 
+    def export_interchange(self, dest_dir: Path | str, names: list[str] | None = None,
+                           progress: Progress | None = None):
+        """Export one or more profiles as a Deadlock Mod Interchange bundle (the
+        shared format DMM and Grimoire import). Defaults to the active profile.
+        Returns an interchange.ExportReport (bundle_path, exported, profiles, skipped)."""
+        from sapphire import __version__, interchange
+        with self.lock:
+            return interchange.export_bundle(self.lib, dest_dir, names,
+                                             manager_version=__version__, progress=progress)
+
     @classmethod
     def read_shared_profile(cls, path: Path | str) -> dict:
         try:
